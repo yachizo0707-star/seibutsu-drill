@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="生物ドリル">
+<meta name="theme-color" content="#0d1f0f">
+<title>生物ドリル</title>
+<style>
+:root {
+  --bg:#0d1f0f; --surface:#152518; --surface2:#1e3322;
+  --accent:#69c46d; --accent2:#f4a736;
+  --correct:#69c46d; --wrong:#e05c5c;
+  --text:#e8f5e9; --text2:#7fa882; --radius:14px;
+  --combo:#ffd54f;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{
+  font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN',sans-serif;
+  background:var(--bg);color:var(--text);min-height:100dvh;
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+}
+.screen{display:none;flex-direction:column;min-height:100dvh;}
+.screen.active{display:flex;}
+
+/* HOME */
+#home{
+  align-items:center;
+  padding:28px 20px calc(28px + env(safe-area-inset-bottom));
+  padding-top:calc(28px + env(safe-area-inset-top));
+  gap:16px;overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+.logo-area{text-align:center;}
+.logo-icon{font-size:52px;}
+.logo-title{font-size:26px;font-weight:700;color:var(--accent);margin-top:6px;letter-spacing:.04em;}
+.logo-sub{font-size:12px;color:var(--text2);margin-top:3px;}
+.stats-bar{
+  display:flex;gap:10px;background:var(--surface);
+  border-radius:var(--radius);padding:14px 16px;width:100%;max-width:380px;
+}
+.stat{flex:1;text-align:center;}
+.stat-val{font-size:20px;font-weight:700;color:var(--accent);}
+.stat-label{font-size:10px;color:var(--text2);margin-top:2px;}
+
+/* 単元別正答率グラフ */
+.stats-chart-card{
+  background:var(--surface);border-radius:var(--radius);
+  padding:16px;width:100%;max-width:380px;
+}
+.stats-chart-title{font-size:12px;font-weight:700;color:var(--text2);letter-spacing:.08em;margin-bottom:12px;}
+.unit-stat-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.unit-stat-row:last-child{margin-bottom:0;}
+.unit-stat-icon{font-size:18px;flex-shrink:0;}
+.unit-stat-info{flex:1;}
+.unit-stat-name{font-size:12px;font-weight:600;margin-bottom:4px;}
+.unit-stat-bar-wrap{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;}
+.unit-stat-bar-fill{height:100%;border-radius:3px;transition:width .6s ease;}
+.unit-stat-pct{font-size:12px;font-weight:700;color:var(--accent);min-width:36px;text-align:right;}
+
+.section-label{
+  font-size:10px;font-weight:700;letter-spacing:.1em;
+  color:var(--text2);align-self:flex-start;width:100%;max-width:380px;
+}
+
+/* 苦手ピックアップ */
+.weak-card{
+  background:linear-gradient(135deg,#152518,#1a2e1c);
+  border:1.5px solid #f4a736;border-radius:var(--radius);
+  padding:14px 16px;width:100%;max-width:380px;
+  display:none;cursor:pointer;-webkit-appearance:none;
+}
+.weak-card.visible{display:block;}
+.weak-card-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.weak-card-icon{font-size:20px;}
+.weak-card-title{font-size:14px;font-weight:700;color:var(--accent2);}
+.weak-card-sub{font-size:12px;color:var(--text2);}
+.weak-card-count{font-size:11px;color:var(--accent2);margin-top:4px;font-weight:600;}
+
+/* 復習ボタン */
+.review-home-btn{
+  background:var(--surface);border:1.5px solid var(--accent2);
+  border-radius:var(--radius);padding:14px 16px;
+  display:none;align-items:center;gap:12px;
+  cursor:pointer;text-align:left;width:100%;max-width:380px;-webkit-appearance:none;
+}
+.review-home-btn.visible{display:flex;}
+.review-home-icon{font-size:24px;flex-shrink:0;}
+.review-home-info{flex:1;}
+.review-home-title{font-size:15px;font-weight:700;color:var(--accent2);}
+.review-home-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+.unit-arrow{font-size:18px;color:var(--text2);}
+
+.unit-list{display:flex;flex-direction:column;gap:8px;width:100%;max-width:380px;}
+.unit-btn{
+  background:var(--surface);border:none;border-radius:var(--radius);
+  padding:16px;display:flex;align-items:center;gap:12px;
+  cursor:pointer;text-align:left;-webkit-appearance:none;transition:background .15s;
+}
+.unit-btn:active{background:var(--surface2);}
+.unit-icon{font-size:26px;flex-shrink:0;}
+.unit-info{flex:1;}
+.unit-name{font-size:15px;font-weight:600;}
+.unit-count{font-size:11px;color:var(--text2);margin-top:2px;}
+
+/* LEVEL SELECT */
+#level-select{
+  padding:20px;padding-top:calc(20px + env(safe-area-inset-top));
+  gap:16px;overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+.back-btn{background:none;border:none;color:var(--accent);font-size:15px;cursor:pointer;-webkit-appearance:none;padding:4px 0;align-self:flex-start;}
+.page-title{font-size:20px;font-weight:700;}
+.page-sub{font-size:12px;color:var(--text2);}
+
+/* タイムアタックトグル */
+.mode-toggle-row{
+  display:flex;align-items:center;gap:10px;
+  background:var(--surface);border-radius:10px;padding:12px 16px;
+}
+.mode-toggle-label{font-size:14px;font-weight:600;flex:1;}
+.mode-toggle-sub{font-size:11px;color:var(--text2);}
+.toggle-switch{
+  position:relative;width:44px;height:26px;
+  background:var(--surface2);border-radius:13px;
+  cursor:pointer;transition:background .2s;flex-shrink:0;
+}
+.toggle-switch.on{background:var(--accent);}
+.toggle-knob{
+  position:absolute;top:3px;left:3px;
+  width:20px;height:20px;border-radius:50%;
+  background:white;transition:transform .2s;
+}
+.toggle-switch.on .toggle-knob{transform:translateX(18px);}
+
+.level-list{display:flex;flex-direction:column;gap:10px;}
+.level-btn{
+  background:var(--surface);border:2px solid transparent;
+  border-radius:var(--radius);padding:18px;cursor:pointer;
+  text-align:left;-webkit-appearance:none;transition:border-color .15s;
+}
+.level-btn:active{border-color:var(--accent);}
+.level-badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;margin-bottom:6px;}
+.lv1 .level-badge{background:#1b5e20;color:#a5d6a7;}
+.lv2 .level-badge{background:#1a3a00;color:#b5e57a;}
+.lv3 .level-badge{background:#4a3500;color:#ffe082;}
+.level-name{font-size:16px;font-weight:700;}
+.level-desc{font-size:12px;color:var(--text2);margin-top:3px;}
+.level-qcount{font-size:11px;color:var(--text2);margin-top:6px;}
+
+/* QUIZ */
+#quiz{overflow:hidden;}
+.quiz-header{
+  background:var(--surface);padding:12px 16px;
+  padding-top:calc(12px + env(safe-area-inset-top));
+  display:flex;align-items:center;gap:10px;
+}
+.quiz-back{background:none;border:none;color:var(--accent);font-size:15px;cursor:pointer;-webkit-appearance:none;}
+.progress-wrap{flex:1;}
+.progress-text{font-size:11px;color:var(--text2);margin-bottom:3px;}
+.progress-bar{height:4px;background:var(--bg);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s ease;}
+.score-badge{background:var(--bg);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:700;color:var(--accent);}
+
+/* タイマーバー */
+.timer-bar-wrap{height:4px;background:var(--bg);}
+.timer-bar-fill{height:100%;background:var(--correct);transition:width .1s linear,background .3s;}
+
+/* コンボ表示 */
+.combo-banner{
+  display:none;text-align:center;font-size:13px;font-weight:700;
+  color:var(--combo);padding:6px;background:rgba(255,213,79,.1);
+  animation:comboPop .3s ease;
+}
+.combo-banner.show{display:block;}
+@keyframes comboPop{0%{transform:scale(.8);opacity:0;}100%{transform:scale(1);opacity:1;}}
+
+.quiz-body{
+  flex:1;padding:16px;
+  padding-bottom:calc(16px + env(safe-area-inset-bottom));
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;gap:14px;
+}
+.question-card{background:var(--surface);border-radius:var(--radius);padding:16px;}
+.question-level{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text2);margin-bottom:8px;}
+.question-text{font-size:15px;font-weight:600;line-height:1.6;}
+.svg-container{
+  background:#f0faf0;border-radius:10px;padding:8px;
+  display:none;justify-content:center;align-items:center;margin-top:12px;
+}
+.svg-container.show{display:flex;}
+.svg-container svg{max-width:100%;height:auto;}
+.highlight-part{animation:pulseH 1.5s ease-in-out infinite;}
+@keyframes pulseH{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+.choices{display:flex;flex-direction:column;gap:8px;}
+.choice-btn{
+  background:var(--surface);border:2px solid var(--surface2);
+  border-radius:var(--radius);padding:14px 16px;
+  font-size:16px;font-weight:500;color:var(--text);
+  cursor:pointer;text-align:left;-webkit-appearance:none;
+  transition:border-color .15s,background .15s;line-height:1.5;
+}
+.choice-btn:active:not(:disabled){border-color:var(--accent);}
+.choice-btn.correct{border-color:var(--correct);background:rgba(105,196,109,.12);color:var(--correct);}
+.choice-btn.wrong{border-color:var(--wrong);background:rgba(224,92,92,.12);color:var(--wrong);}
+.choice-btn:disabled{cursor:default;}
+
+.explanation-card{
+  background:var(--surface2);border-radius:var(--radius);padding:16px;
+  display:none;flex-direction:column;gap:8px;
+}
+.explanation-card.show{display:flex;}
+.exp-header{font-size:12px;font-weight:700;color:var(--accent);}
+.exp-text{font-size:13px;line-height:1.7;}
+.timeout-msg{text-align:center;color:var(--wrong);font-size:13px;font-weight:700;display:none;}
+.timeout-msg.show{display:block;}
+
+.next-btn{
+  background:var(--accent);border:none;border-radius:var(--radius);
+  padding:15px;font-size:15px;font-weight:700;color:#0d1f0f;
+  cursor:pointer;-webkit-appearance:none;display:none;
+}
+.next-btn.show{display:block;}
+.next-btn:active{opacity:.85;}
+
+/* RESULT */
+#result{
+  align-items:center;justify-content:center;
+  padding:28px 20px calc(28px + env(safe-area-inset-bottom));
+  padding-top:calc(28px + env(safe-area-inset-top));
+  gap:18px;overflow-y:auto;
+}
+.result-emoji{font-size:60px;text-align:center;}
+.result-title{font-size:24px;font-weight:700;text-align:center;}
+.result-sub{font-size:13px;color:var(--text2);text-align:center;}
+.result-card{
+  background:var(--surface);border-radius:var(--radius);
+  padding:20px;width:100%;max-width:380px;
+  display:flex;flex-direction:column;gap:14px;
+}
+.result-score-big{text-align:center;font-size:44px;font-weight:700;color:var(--accent);}
+.result-score-label{text-align:center;font-size:12px;color:var(--text2);margin-top:-8px;}
+.result-stats{display:flex;gap:10px;}
+.result-stat{flex:1;background:var(--bg);border-radius:10px;padding:10px;text-align:center;}
+.result-stat-val{font-size:18px;font-weight:700;}
+.result-stat-label{font-size:10px;color:var(--text2);margin-top:2px;}
+.correct-val{color:var(--correct);}
+.wrong-val{color:var(--wrong);}
+.combo-val{color:var(--combo);}
+.level-up-banner{
+  background:linear-gradient(135deg,#2e7d32,#66bb6a);
+  border-radius:10px;padding:10px 14px;text-align:center;
+  font-size:13px;font-weight:700;color:white;display:none;
+}
+.level-up-banner.show{display:block;}
+.result-btns{display:flex;flex-direction:column;gap:8px;width:100%;max-width:380px;}
+.review-btn{background:var(--accent2);border:none;border-radius:var(--radius);padding:14px;font-size:14px;font-weight:700;color:white;cursor:pointer;-webkit-appearance:none;}
+.retry-btn{background:var(--accent);border:none;border-radius:var(--radius);padding:14px;font-size:15px;font-weight:700;color:#0d1f0f;cursor:pointer;-webkit-appearance:none;}
+.home-btn{background:var(--surface);border:none;border-radius:var(--radius);padding:14px;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;-webkit-appearance:none;}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home" class="screen active">
+  <div class="logo-area">
+    <div class="logo-icon">🌿</div>
+    <div class="logo-title">生物ドリル</div>
+    <div class="logo-sub">中学1年生 理科・生物分野</div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-val" id="total-points">0</div><div class="stat-label">ポイント</div></div>
+    <div class="stat"><div class="stat-val" id="player-level">1</div><div class="stat-label">レベル</div></div>
+    <div class="stat"><div class="stat-val" id="total-correct">0</div><div class="stat-label">正解数</div></div>
+    <div class="stat"><div class="stat-val" id="max-combo-home">0</div><div class="stat-label">最大コンボ</div></div>
+  </div>
+
+  <div class="stats-chart-card">
+    <div class="stats-chart-title">📊 単元別 正答率</div>
+    <div class="unit-stat-row">
+      <span class="unit-stat-icon">🌸</span>
+      <div class="unit-stat-info">
+        <div class="unit-stat-name">花のつくりとはたらき</div>
+        <div class="unit-stat-bar-wrap"><div class="unit-stat-bar-fill" id="bar-0" style="width:0%;background:#69c46d"></div></div>
+      </div>
+      <div class="unit-stat-pct" id="pct-0">-%</div>
+    </div>
+    <div class="unit-stat-row">
+      <span class="unit-stat-icon">🍃</span>
+      <div class="unit-stat-info">
+        <div class="unit-stat-name">葉のつくりとはたらき</div>
+        <div class="unit-stat-bar-wrap"><div class="unit-stat-bar-fill" id="bar-1" style="width:0%;background:#4fc3f7"></div></div>
+      </div>
+      <div class="unit-stat-pct" id="pct-1">-%</div>
+    </div>
+    <div class="unit-stat-row">
+      <span class="unit-stat-icon">🌱</span>
+      <div class="unit-stat-info">
+        <div class="unit-stat-name">根・茎のつくりとはたらき</div>
+        <div class="unit-stat-bar-wrap"><div class="unit-stat-bar-fill" id="bar-2" style="width:0%;background:#ce93d8"></div></div>
+      </div>
+      <div class="unit-stat-pct" id="pct-2">-%</div>
+    </div>
+    <div class="unit-stat-row">
+      <span class="unit-stat-icon">☀️</span>
+      <div class="unit-stat-info">
+        <div class="unit-stat-name">光合成と呼吸</div>
+        <div class="unit-stat-bar-wrap"><div class="unit-stat-bar-fill" id="bar-3" style="width:0%;background:#ffd54f"></div></div>
+      </div>
+      <div class="unit-stat-pct" id="pct-3">-%</div>
+    </div>
+  </div>
+
+  <button class="weak-card" id="weak-card-btn">
+    <div class="weak-card-header">
+      <span class="weak-card-icon">🎯</span>
+      <div>
+        <div class="weak-card-title">苦手問題ピックアップ</div>
+        <div class="weak-card-sub">間違えた回数が多い問題を集中練習</div>
+      </div>
+    </div>
+    <div class="weak-card-count" id="weak-count-text">10問 選抜</div>
+  </button>
+
+  <button class="review-home-btn" id="review-home-btn">
+    <span class="review-home-icon">📝</span>
+    <div class="review-home-info">
+      <div class="review-home-title">まちがい復習</div>
+      <div class="review-home-sub"><span id="review-count">0</span>問 たまっています</div>
+    </div>
+    <span class="unit-arrow">›</span>
+  </button>
+
+  <div class="section-label">単元を選ぼう</div>
+  <div class="unit-list">
+    <button class="unit-btn" data-unit="0">
+      <span class="unit-icon">🌸</span>
+      <div class="unit-info"><div class="unit-name">花のつくりとはたらき</div><div class="unit-count">全30問（図問題あり）</div></div>
+      <span class="unit-arrow">›</span>
+    </button>
+    <button class="unit-btn" data-unit="1">
+      <span class="unit-icon">🍃</span>
+      <div class="unit-info"><div class="unit-name">葉のつくりとはたらき</div><div class="unit-count">全30問（図問題あり）</div></div>
+      <span class="unit-arrow">›</span>
+    </button>
+    <button class="unit-btn" data-unit="2">
+      <span class="unit-icon">🌱</span>
+      <div class="unit-info"><div class="unit-name">根・茎のつくりとはたらき</div><div class="unit-count">全30問（図問題あり）</div></div>
+      <span class="unit-arrow">›</span>
+    </button>
+    <button class="unit-btn" data-unit="3">
+      <span class="unit-icon">☀️</span>
+      <div class="unit-info"><div class="unit-name">光合成と呼吸</div><div class="unit-count">全45問（NEW!）</div></div>
+      <span class="unit-arrow">›</span>
+    </button>
+  </div>
+</div>
+
+<!-- LEVEL SELECT -->
+<div id="level-select" class="screen">
+  <button class="back-btn" id="back-to-home">← もどる</button>
+  <div>
+    <div class="page-title" id="level-unit-title">花のつくりとはたらき</div>
+    <div class="page-sub">難易度を選んでね</div>
+  </div>
+
+  <div class="mode-toggle-row">
+    <div>
+      <div class="mode-toggle-label">⏱ タイムアタック</div>
+      <div class="mode-toggle-sub">1問30秒制限・時間ボーナスあり</div>
+    </div>
+    <div class="toggle-switch" id="time-toggle"><div class="toggle-knob"></div></div>
+  </div>
+
+  <div class="level-list">
+    <button class="level-btn lv1" data-level="0">
+      <span class="level-badge">BASIC</span>
+      <div class="level-name">基本問題</div>
+      <div class="level-desc">各部の名前・基礎知識の確認</div>
+      <div class="level-qcount" id="lv1-count">10問</div>
+    </button>
+    <button class="level-btn lv2" data-level="1">
+      <span class="level-badge">STANDARD</span>
+      <div class="level-name">練習問題</div>
+      <div class="level-desc">しくみの理解・応用</div>
+      <div class="level-qcount" id="lv2-count">12問</div>
+    </button>
+    <button class="level-btn lv3" data-level="2">
+      <span class="level-badge">ADVANCED</span>
+      <div class="level-name">STEP演習・活用問題</div>
+      <div class="level-desc">思考力・実験問題</div>
+      <div class="level-qcount" id="lv3-count">8問</div>
+    </button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="screen">
+  <div class="quiz-header">
+    <button class="quiz-back" id="quiz-back">✕</button>
+    <div class="progress-wrap">
+      <div class="progress-text" id="progress-text">1 / 10</div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="score-badge" id="quiz-score">0pt</div>
+  </div>
+  <div class="timer-bar-wrap" id="timer-bar-wrap" style="display:none">
+    <div class="timer-bar-fill" id="timer-bar-fill" style="width:100%"></div>
+  </div>
+  <div class="combo-banner" id="combo-banner">🔥 3連続正解！ コンボボーナス！</div>
+  <div class="quiz-body">
+    <div class="question-card">
+      <div class="question-level" id="q-level">BASIC</div>
+      <div class="question-text" id="q-text"></div>
+      <div class="svg-container" id="svg-container"><div id="svg-content"></div></div>
+    </div>
+    <div class="choices" id="choices"></div>
+    <div class="timeout-msg" id="timeout-msg">⏰ 時間切れ！</div>
+    <div class="explanation-card" id="explanation">
+      <div class="exp-header" id="exp-header">💡 解説</div>
+      <div class="exp-text" id="exp-text"></div>
+    </div>
+    <button class="next-btn" id="next-btn">次の問題へ →</button>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="screen">
+  <div class="result-emoji" id="result-emoji">🎉</div>
+  <div class="result-title" id="result-title">すばらしい！</div>
+  <div class="result-sub" id="result-sub">全問正解！</div>
+  <div class="result-card">
+    <div class="result-score-big" id="result-score">+50pt</div>
+    <div class="result-score-label">獲得ポイント</div>
+    <div class="result-stats">
+      <div class="result-stat"><div class="result-stat-val correct-val" id="r-correct">0</div><div class="result-stat-label">正解</div></div>
+      <div class="result-stat"><div class="result-stat-val wrong-val" id="r-wrong">0</div><div class="result-stat-label">不正解</div></div>
+      <div class="result-stat"><div class="result-stat-val" id="r-rate">0%</div><div class="result-stat-label">正答率</div></div>
+      <div class="result-stat"><div class="result-stat-val combo-val" id="r-combo">0</div><div class="result-stat-label">最大コンボ</div></div>
+    </div>
+    <div class="level-up-banner" id="level-up-banner">🎊 レベルアップ！ Lv.<span id="new-level">2</span> になった！</div>
+  </div>
+  <div class="result-btns">
+    <button class="review-btn" id="review-result-btn" style="display:none">📝 間違えた問題を復習する</button>
+    <button class="retry-btn" id="retry-btn">もう一度やる</button>
+    <button class="home-btn" id="home-btn-result">単元選択にもどる</button>
+  </div>
+</div>
+
+<script>
+(function(){
+// ===== SVG =====
+const SVGS = {
+  abrana_flower: (hl) => `<svg viewBox="0 0 320 260" width="290" height="235" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ar" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#444"/></marker></defs>
+  <rect width="320" height="260" fill="#f0faf0" rx="8"/>
+  <ellipse cx="160" cy="205" rx="68" ry="16" fill="#5a9e5a" opacity=".75" ${hl==='がく'?'class="highlight-part"':''}/>
+  <ellipse cx="132" cy="190" rx="20" ry="38" fill="#5a9e5a" opacity=".75" transform="rotate(-28 132 190)" ${hl==='がく'?'class="highlight-part"':''}/>
+  <ellipse cx="188" cy="190" rx="20" ry="38" fill="#5a9e5a" opacity=".75" transform="rotate(28 188 190)" ${hl==='がく'?'class="highlight-part"':''}/>
+  <ellipse cx="108" cy="158" rx="25" ry="46" fill="#ffe066" opacity=".92" transform="rotate(-24 108 158)" ${hl==='花弁'?'class="highlight-part"':''}/>
+  <ellipse cx="212" cy="158" rx="25" ry="46" fill="#ffe066" opacity=".92" transform="rotate(24 212 158)" ${hl==='花弁'?'class="highlight-part"':''}/>
+  <ellipse cx="144" cy="128" rx="25" ry="46" fill="#ffe066" opacity=".92" transform="rotate(-8 144 128)" ${hl==='花弁'?'class="highlight-part"':''}/>
+  <ellipse cx="176" cy="128" rx="25" ry="46" fill="#ffe066" opacity=".92" transform="rotate(8 176 128)" ${hl==='花弁'?'class="highlight-part"':''}/>
+  ${[[-18,-52],[-7,-57],[4,-57],[14,-57],[24,-52],[34,-46]].map(([dx,dy],i)=>`
+    <line x1="${160+dx}" y1="188" x2="${160+dx*1.2}" y2="${188+dy}" stroke="#8b6914" stroke-width="2" ${hl==='おしべ'?'class="highlight-part"':''}/>
+    <ellipse cx="${160+dx*1.2}" cy="${188+dy}" rx="5" ry="3" fill="#f4c430" transform="rotate(${i*8-20} ${160+dx*1.2} ${188+dy})" ${hl==='おしべ'?'class="highlight-part"':''}/>
+  `).join('')}
+  <line x1="160" y1="198" x2="160" y2="128" stroke="#2d6a2d" stroke-width="4" ${hl==='めしべ'?'class="highlight-part"':''}/>
+  <ellipse cx="160" cy="122" rx="9" ry="6" fill="#3d8b3d" ${hl==='柱頭'?'class="highlight-part"':''}/>
+  <ellipse cx="160" cy="202" rx="16" ry="11" fill="#3d8b3d" opacity=".9" ${hl==='子房'?'class="highlight-part"':''}/>
+  <line x1="155" y1="158" x2="48" y2="82" stroke="#444" stroke-width="1.2" marker-end="url(#ar)"/>
+  <text x="28" y="78" font-size="14" font-weight="bold" fill="#c0392b">A</text>
+  <line x1="176" y1="148" x2="268" y2="88" stroke="#444" stroke-width="1.2" marker-end="url(#ar)"/>
+  <text x="272" y="85" font-size="14" font-weight="bold" fill="#c0392b">B</text>
+  <line x1="112" y1="145" x2="48" y2="145" stroke="#444" stroke-width="1.2" marker-end="url(#ar)"/>
+  <text x="28" y="149" font-size="14" font-weight="bold" fill="#c0392b">C</text>
+  <line x1="138" y1="202" x2="58" y2="232" stroke="#444" stroke-width="1.2" marker-end="url(#ar)"/>
+  <text x="38" y="236" font-size="14" font-weight="bold" fill="#c0392b">D</text>
+  <line x1="172" y1="207" x2="252" y2="235" stroke="#444" stroke-width="1.2" marker-end="url(#ar)"/>
+  <text x="256" y="239" font-size="14" font-weight="bold" fill="#c0392b">E</text>
+</svg>`,
+
+  ha_surface: (hl) => `<svg viewBox="0 0 280 200" width="265" height="190" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ar5" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#444"/></marker></defs>
+  <rect width="280" height="200" fill="#f0faf0" rx="8"/>
+  ${[[60,70],[120,60],[180,75],[100,120],[160,115],[80,160],[140,155]].map(([cx,cy])=>
+    `<ellipse cx="${cx}" cy="${cy}" rx="28" ry="20" fill="#c8e6c9" stroke="#7cb97c" stroke-width="1.2"/>`
+  ).join('')}
+  <ellipse cx="140" cy="100" rx="18" ry="12" fill="none" stroke="#5a9e5a" stroke-width="2" ${hl==='気孔'?'class="highlight-part"':''}/>
+  <ellipse cx="130" cy="98" rx="7" ry="10" fill="#4a8e4a" opacity=".8" ${hl==='孔辺細胞'?'class="highlight-part"':''}/>
+  <ellipse cx="150" cy="102" rx="7" ry="10" fill="#4a8e4a" opacity=".8" ${hl==='孔辺細胞'?'class="highlight-part"':''}/>
+  <line x1="140" y1="88" x2="228" y2="50" stroke="#444" stroke-width="1.2" marker-end="url(#ar5)"/>
+  <text x="232" y="47" font-size="13" font-weight="bold" fill="#c0392b">A</text>
+  <line x1="130" y1="100" x2="48" y2="78" stroke="#444" stroke-width="1.2" marker-end="url(#ar5)"/>
+  <text x="28" y="82" font-size="13" font-weight="bold" fill="#c0392b">B</text>
+</svg>`,
+
+  ne_danmen: (hl) => `<svg viewBox="0 0 280 220" width="265" height="208" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ar7" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#444"/></marker></defs>
+  <rect width="280" height="220" fill="#f0faf0" rx="8"/>
+  <circle cx="140" cy="118" r="72" fill="#c8e6c9" stroke="#7cb97c" stroke-width="2"/>
+  <circle cx="140" cy="118" r="48" fill="#a5d6a7" stroke="#5a9e5a" stroke-width="1.5"/>
+  ${[0,1,2,3,4,5].map(i=>{const a=i*60*Math.PI/180,cx=140+32*Math.cos(a),cy=118+32*Math.sin(a);return `<circle cx="${cx}" cy="${cy}" r="9" fill="#1565c0" opacity=".75" ${hl==='道管'?'class="highlight-part"':''}/>`}).join('')}
+  ${[0,1,2,3,4,5].map(i=>{const a=(i*60+30)*Math.PI/180,cx=140+46*Math.cos(a),cy=118+46*Math.sin(a);return `<ellipse cx="${cx}" cy="${cy}" rx="9" ry="7" fill="#e65100" opacity=".65" ${hl==='師管'?'class="highlight-part"':''}/>`}).join('')}
+  ${[0,1,2,3,4,5,6,7,8,9,10,11].map(i=>{const a=i*30*Math.PI/180,cx=140+68*Math.cos(a),cy=118+68*Math.sin(a);return `<line x1="${cx}" y1="${cy}" x2="${140+82*Math.cos(a)}" y2="${118+82*Math.sin(a)}" stroke="#5a9e5a" stroke-width="3" ${hl==='根毛'?'class="highlight-part"':''}/>`}).join('')}
+  <line x1="155" y1="84" x2="228" y2="48" stroke="#444" stroke-width="1.2" marker-end="url(#ar7)"/>
+  <text x="232" y="45" font-size="13" font-weight="bold" fill="#c0392b">A</text>
+  <line x1="152" y1="102" x2="228" y2="95" stroke="#444" stroke-width="1.2" marker-end="url(#ar7)"/>
+  <text x="232" y="99" font-size="13" font-weight="bold" fill="#c0392b">B</text>
+  <line x1="140" y1="70" x2="68" y2="48" stroke="#444" stroke-width="1.2" marker-end="url(#ar7)"/>
+  <text x="46" y="45" font-size="13" font-weight="bold" fill="#c0392b">C</text>
+  <line x1="85" y1="155" x2="42" y2="178" stroke="#444" stroke-width="1.2" marker-end="url(#ar7)"/>
+  <text x="22" y="182" font-size="13" font-weight="bold" fill="#c0392b">D</text>
+</svg>`,
+
+  kogosei_shikumi: (hl) => `<svg viewBox="0 0 300 200" width="285" height="190" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="arK" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#444"/></marker></defs>
+  <rect width="300" height="200" fill="#f0faf0" rx="8"/>
+  <text x="150" y="15" text-anchor="middle" font-size="11" fill="#555" font-weight="bold">光合成のしくみ（葉緑体）</text>
+  <ellipse cx="150" cy="110" rx="110" ry="70" fill="#c8e6c9" stroke="#5a9e5a" stroke-width="2" ${hl==='葉緑体'?'class="highlight-part"':''}/>
+  <text x="150" y="32" text-anchor="middle" font-size="11" fill="#444">光</text>
+  <line x1="150" y1="35" x2="150" y2="46" stroke="#ffd54f" stroke-width="2.5" marker-end="url(#arK)"/>
+  <text x="48" y="95" font-size="10" fill="#1565c0">水（H₂O）</text>
+  <line x1="70" y1="98" x2="108" y2="100" stroke="#1565c0" stroke-width="2" marker-end="url(#arK)" ${hl==='水'?'class="highlight-part"':''}/>
+  <text x="48" y="130" font-size="10" fill="#555">二酸化炭素</text>
+  <line x1="80" y1="125" x2="108" y2="118" stroke="#555" stroke-width="2" marker-end="url(#arK)" ${hl==='二酸化炭素'?'class="highlight-part"':''}/>
+  <rect x="110" y="95" width="80" height="30" rx="6" fill="#4a9e6a" opacity=".7"/>
+  <text x="150" y="115" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff">葉緑体</text>
+  <text x="224" y="90" font-size="10" fill="#2d6a2d">デンプンなど</text>
+  <line x1="192" y1="100" x2="220" y2="95" stroke="#2d6a2d" stroke-width="2" marker-end="url(#arK)" ${hl==='デンプン'?'class="highlight-part"':''}/>
+  <text x="224" y="128" font-size="10" fill="#4caf50">酸素（O₂）</text>
+  <line x1="192" y1="118" x2="220" y2="125" stroke="#4caf50" stroke-width="2" marker-end="url(#arK)" ${hl==='酸素'?'class="highlight-part"':''}/>
+  <text x="150" y="165" text-anchor="middle" font-size="10" fill="#666">光＋水＋CO₂ → デンプン＋O₂</text>
+</svg>`,
+
+  kokyuu_shikumi: (hl) => `<svg viewBox="0 0 300 180" width="285" height="170" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="arR" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#444"/></marker></defs>
+  <rect width="300" height="180" fill="#f0faf0" rx="8"/>
+  <text x="150" y="16" text-anchor="middle" font-size="11" fill="#555" font-weight="bold">植物の呼吸（ミトコンドリア）</text>
+  <ellipse cx="150" cy="100" rx="100" ry="58" fill="#ffe0b2" stroke="#f4a736" stroke-width="2"/>
+  <text x="48" y="92" font-size="10" fill="#4caf50">酸素（O₂）</text>
+  <line x1="80" y1="90" x2="110" y2="93" stroke="#4caf50" stroke-width="2" marker-end="url(#arR)" ${hl==='酸素'?'class="highlight-part"':''}/>
+  <text x="48" y="115" font-size="10" fill="#795548">養分</text>
+  <line x1="70" y1="112" x2="110" y2="103" stroke="#795548" stroke-width="2" marker-end="url(#arR)" ${hl==='養分'?'class="highlight-part"':''}/>
+  <rect x="112" y="85" width="76" height="30" rx="6" fill="#f4a736" opacity=".7"/>
+  <text x="150" y="105" text-anchor="middle" font-size="11" font-weight="bold" fill="#fff">ミトコンドリア</text>
+  <text x="210" y="90" font-size="10" fill="#555">二酸化炭素</text>
+  <line x1="190" y1="95" x2="208" y2="95" stroke="#555" stroke-width="2" marker-end="url(#arR)" ${hl==='二酸化炭素'?'class="highlight-part"':''}/>
+  <text x="210" y="115" font-size="10" fill="#1565c0">水（H₂O）</text>
+  <line x1="190" y1="105" x2="208" y2="110" stroke="#1565c0" stroke-width="2" marker-end="url(#arR)" ${hl==='水'?'class="highlight-part"':''}/>
+  <text x="150" y="158" text-anchor="middle" font-size="10" fill="#666">養分＋O₂ → CO₂＋水＋エネルギー</text>
+</svg>`,
+};
+
+// ===== 問題データ =====
+const UNITS = [
+  // ===== 花のつくりとはたらき =====
+  { name:'花のつくりとはたらき', icon:'🌸', levels:[
+    // BASIC 10問
+    [
+      {q:'花を外側から分解したとき、もっとも内側にある部分はどれか？',choices:['がく','花弁','おしべ','めしべ'],ans:3,exp:'花は外側からがく→花弁→おしべ→めしべの順に並んでいます。めしべが最も内側です。'},
+      {q:'図のA〜Eのうち「めしべ」はどれか？',choices:['A','B','C','D'],ans:0,exp:'Aがめしべ（花の中心の1本）です。Bはおしべ、Cは花弁、Dはがく、Eは子房です。',svg:'abrana_flower'},
+      {q:'図のA〜Eのうち「おしべ」はどれか？',choices:['A','B','C','D'],ans:1,exp:'Bがおしべです。先端のやくに花粉がつくられます。アブラナには6本あります。',svg:'abrana_flower'},
+      {q:'おしべの先端にある袋を何というか？',choices:['花粉','やく','柱頭','胚珠'],ans:1,exp:'おしべの先端にある袋を「やく」といいます。やくの中に花粉がつくられます。'},
+      {q:'花粉がめしべの柱頭につくことを何というか？',choices:['発芽','受粉','受精','結実'],ans:1,exp:'花粉がめしべの柱頭につくことを「受粉」といいます。受粉後、子房は果実に、胚珠は種子になります。'},
+      {q:'受粉後、胚珠は何に成長するか？',choices:['果実','花弁','種子','花粉'],ans:2,exp:'受粉後、胚珠は種子になります。子房は果実になります。'},
+      {q:'受粉後、子房は何に成長するか？',choices:['種子','花弁','花粉','果実'],ans:3,exp:'受粉後、子房は果実になります。その中の胚珠は種子になります。'},
+      {q:'アブラナの花弁の特徴として正しいのはどれか？',choices:['4枚・はなれている','4枚・くっついている','5枚・はなれている','5枚・くっついている'],ans:0,exp:'アブラナの花弁は4枚で1枚1枚はなれています（離弁花）。'},
+      {q:'被子植物で胚珠が入っている場所はどこか？',choices:['やく','柱頭','花弁','子房'],ans:3,exp:'被子植物は胚珠が子房の中に入っています。これが裸子植物との大きな違いです。'},
+      {q:'マツのような子房がなく胚珠がむき出しの植物を何というか？',choices:['被子植物','裸子植物','単子葉植物','合弁花類'],ans:1,exp:'マツ・イチョウ・ソテツなど子房がなく胚珠がむき出しの植物を裸子植物といいます。'},
+    ],
+    // STANDARD 12問
+    [
+      {q:'被子植物と裸子植物の違いとして正しいのはどれか？',choices:['被子植物は子房がなく、裸子植物は子房がある','被子植物は胚珠が子房の中にあり、裸子植物は胚珠がむき出し','被子植物は花弁がなく、裸子植物は花弁がある','被子植物は風媒花で、裸子植物は虫媒花'],ans:1,exp:'被子植物は胚珠が子房の中にあります。裸子植物は子房がなく胚珠がむき出しになっています。'},
+      {q:'マツ・イチョウ・ソテツの分類は？',choices:['被子植物','裸子植物','単子葉植物','双子葉植物'],ans:1,exp:'マツ・イチョウ・ソテツは裸子植物です。子房がないので果実はできず、種子だけできます。'},
+      {q:'裸子植物では受粉後に何ができるか？',choices:['果実と種子','果実のみ','種子のみ','何もできない'],ans:2,exp:'裸子植物は子房がないので果実はできませんが、胚珠があるので種子はできます。'},
+      {q:'タンポポの1つの花の花弁の特徴はどれか？',choices:['5枚の花弁が1枚1枚はなれている','5枚の花弁がくっついて1つになっている','4枚の花弁がくっついている','花弁は1枚だけ'],ans:1,exp:'タンポポの1つの花は5枚の花弁がくっついた合弁花です。'},
+      {q:'虫によって花粉が運ばれる花を何というか？',choices:['風媒花','水媒花','虫媒花','自家受粉花'],ans:2,exp:'虫媒花は虫によって花粉が運ばれます。あざやかな花弁・においがあり、花粉はとげがついてべたついています。'},
+      {q:'花弁がくっついている花（合弁花）はどれか？',choices:['アブラナ','サクラ','ツツジ','エンドウ'],ans:2,exp:'ツツジは5枚の花弁がくっついた合弁花です。アブラナ・サクラ・エンドウは離弁花です。'},
+      {q:'サクランボには果実があるがギンナン（イチョウ）には果実がない。その理由はどれか？',choices:['サクラは木で、イチョウは草だから','サクラは被子植物で子房があるが、イチョウは裸子植物で子房がないから','サクラは虫媒花で、イチョウは風媒花だから','イチョウは種子がないから'],ans:1,exp:'サクラは被子植物（子房あり）なので受粉後に果実ができます。イチョウは裸子植物（子房なし）なので果実はできません。'},
+      {q:'胚珠の数と種子の数の関係で正しいのはどれか？',choices:['胚珠1個から種子が多数できる','胚珠の数と種子の数は一致する','種子は必ず1個できる','胚珠と種子は無関係'],ans:1,exp:'受粉後、胚珠1個が種子1個になります。'},
+      {q:'マツの花粉の特徴として正しいのはどれか？',choices:['とげがついてべたついている','空気袋がついており風で運ばれやすい','色が鮮やかで虫を引き寄せる','水に溶けやすい'],ans:1,exp:'マツは風媒花なので花粉に空気袋がついており、風で遠くまで運ばれやすいつくりです。'},
+      {q:'タンポポを食べるとき食べているのは何か？（綿毛のついたもの）',choices:['果実のみ','種子のみ','果実と種子','花弁'],ans:0,exp:'タンポポの綿毛のついたもの（そう果）は果実です。一般的にタンポポの食用部分は葉・根ですが、実は果実（種子入り）です。'},
+      {q:'アブラナとツツジを比べたとき合弁花はどちらか？',choices:['アブラナ','ツツジ','どちらも合弁花','どちらも離弁花'],ans:1,exp:'ツツジは合弁花（花弁がくっついている）、アブラナは離弁花（花弁がはなれている）です。'},
+      {q:'ダイズを食べるとき食べているのは何か？',choices:['果実','種子','胚珠','がく'],ans:1,exp:'ダイズは被子植物で果実の中に種子があります。私たちが食べるのは種子（豆）の部分です。'},
+    ],
+    // ADVANCED 8問
+    [
+      {q:'タンポポには果実ができるが、マツには果実ができない。その理由はどれか？',choices:['タンポポは木で、マツは草だから','タンポポは被子植物で子房があるが、マツは裸子植物で子房がないから','タンポポは虫媒花で、マツは風媒花だから','マツは種子がないから'],ans:1,exp:'タンポポは被子植物なので子房があり受粉後に果実ができます。マツは裸子植物で子房がないため果実はできません（種子はできます）。'},
+      {q:'アブラナとタンポポを離弁花・合弁花で分けると正しいのはどれか？',choices:['どちらも離弁花','アブラナが離弁花、タンポポが合弁花','アブラナが合弁花、タンポポが離弁花','どちらも合弁花'],ans:1,exp:'アブラナは花弁が1枚1枚はなれた離弁花、タンポポは花弁がくっついた合弁花です。'},
+      {q:'タンポポの1つの花から1個の種子ができることから何がわかるか？',choices:['1つの花に子房が1個ある','1つの花におしべが1本ある','1つの花に胚珠が1個ある','1つの花に花粉が1個ある'],ans:2,exp:'受粉後に胚珠1個が種子1個になるので、1個の種子ができる＝1つの花に胚珠が1個あるということです。'},
+      {q:'キュウリを食べるとき食べているのは何か？',choices:['種子のみ','胚珠のみ','果実全体（種子を含む）','がくの部分'],ans:2,exp:'キュウリは被子植物なので果実があります。キュウリは種子を含む果実全体を食べます。'},
+      {q:'風媒花の花粉の特徴として正しいのはどれか？',choices:['べたついて虫に付きやすい','軽くて大量にできる','においが強い','色が鮮やかである'],ans:1,exp:'風媒花の花粉は軽くて大量にできて風で運ばれやすいです。虫媒花の花粉はべたついてとげがあります。'},
+      {q:'イチョウの「ギンナン」は果実か種子か？',choices:['果実','種子','子房','がく'],ans:1,exp:'イチョウは裸子植物で子房がないので果実はできません。ギンナンは胚珠がそのまま成熟した種子です。'},
+      {q:'めしべの3つの部分として正しい組み合わせはどれか？',choices:['やく・花柱・子房','柱頭・花柱・子房','柱頭・花柱・胚珠','柱頭・やく・子房'],ans:1,exp:'めしべは先端から柱頭・花柱・子房の3つの部分からなります。やくはおしべの先端です。'},
+      {q:'虫媒花と風媒花を比べたとき正しいのはどれか？',choices:['虫媒花の方が花粉の量が多い','風媒花の方が花弁が目立つ','虫媒花の花粉はべたつき、風媒花の花粉は軽くてサラサラ','風媒花は必ずにおいが強い'],ans:2,exp:'虫媒花は虫の体に付くためべたついたとげのある花粉、風媒花は風で運ばれるため軽くてサラサラした花粉をもちます。'},
+    ],
+  ]},
+
+  // ===== 葉のつくりとはたらき =====
+  { name:'葉のつくりとはたらき', icon:'🍃', levels:[
+    // BASIC 10問
+    [
+      {q:'葉の表面に多数見られる、葉を支えている筋を何というか？',choices:['気孔','葉脈','葉緑体','師管'],ans:1,exp:'葉脈は葉の表面に見られる筋で、葉を支えるとともに水や養分を通す道管・師管（維管束）が集まっています。'},
+      {q:'図のうち「気孔」はどれか？',choices:['A','B'],ans:0,exp:'Aが気孔です。2つの孔辺細胞（B）に囲まれたすき間が気孔で、ガスの出入り口・水蒸気の出口になっています。',svg:'ha_surface'},
+      {q:'図のうち「孔辺細胞」はどれか？',choices:['A','B'],ans:1,exp:'Bが孔辺細胞です。三日月形の細胞が2つで気孔を囲んでいます。孔辺細胞には葉緑体があります。',svg:'ha_surface'},
+      {q:'気孔はふつう葉の表側と裏側のどちらに多いか？',choices:['表側','裏側','両方同じ','葉脈上'],ans:1,exp:'気孔はふつう葉の裏側に多くあります。そのため蒸散は葉の裏側でさかんに行われます。'},
+      {q:'光合成が行われる場所はどこか？',choices:['細胞全体','気孔','葉緑体','師管'],ans:2,exp:'光合成は葉の細胞の中にある葉緑体で行われます。'},
+      {q:'葉にデンプンがあるかどうかを調べる試薬は何か？',choices:['食塩水','エタノール','ヨウ素液','塩酸'],ans:2,exp:'ヨウ素液はデンプンと反応して青紫色に変化します。'},
+      {q:'デンプンがあるとき、ヨウ素液は何色になるか？',choices:['赤色','黄色','青紫色','緑色'],ans:2,exp:'ヨウ素液はデンプンと反応して青紫色（青藍色）になります。これをヨウ素デンプン反応といいます。'},
+      {q:'植物が葉に光を受けてデンプンなどの養分をつくるはたらきを何というか？',choices:['蒸散','呼吸','光合成','吸収'],ans:2,exp:'光合成とは植物がおもに葉に光を受けてデンプンなどの養分をつくるはたらきです。葉緑体で行われます。'},
+      {q:'ツユクサのような平行な葉脈を何というか？',choices:['網状脈','平行脈','対称脈','縦脈'],ans:1,exp:'ツユクサ・トウモロコシなどの単子葉類は平行脈をもちます。双子葉類は網状脈をもちます。'},
+      {q:'植物の葉が互いに重なり合わないようについている理由はどれか？',choices:['風通しがよくなるため','どの葉にも日光がよく当たるため','水が葉に当たらないようにするため','葉を守るため'],ans:1,exp:'どの葉にも日光がよく当たり、効率よく光合成ができるようにするためです。'},
+    ],
+    // STANDARD 12問
+    [
+      {q:'葉の脱色にエタノールを使う理由はどれか？',choices:['葉を消毒するため','葉の養分を分解するため','葉の緑色をぬくため','葉の細胞をばらばらにするため'],ans:2,exp:'エタノールに入れると葉の緑色（葉緑体の色素）がエタノールにとけ出して脱色されます。'},
+      {q:'脱色実験でエタノールに入れる前に葉を熱湯につける理由は？',choices:['デンプンを分解するため','葉をやわらかくするため','葉の細胞を死滅させるため','葉の表面を洗うため'],ans:1,exp:'熱湯につけて葉をやわらかくしておくと、その後エタノールに入れたときに緑色の色素が溶け出しやすくなります。'},
+      {q:'ふ入りの葉の「ふの部分」に日光を当てても光合成が行われない理由は？',choices:['日光が当たらないから','水がないから','葉緑体がないから','気孔がないから'],ans:2,exp:'ふの部分は葉緑体がないため、日光が当たっても光合成は行われずデンプンはできません。'},
+      {q:'アルミニウムはくでおおった部分に日光が当たらなかった場合の結果はどれか？',choices:['青紫色になる','黄色になる','色が変わらない（デンプンなし）','赤色になる'],ans:2,exp:'アルミニウムはくでおおった部分には光が当たらず、光合成が行われないためデンプンができません。'},
+      {q:'光合成と光の関係を調べる対照実験として比べるべき条件の組み合わせはどれか？',choices:['葉緑体あり・光あり vs 葉緑体なし・光なし','光あり vs 光なし（他の条件は同じ）','葉緑体あり vs 葉緑体なし（他の条件は同じ）','水あり vs 水なし'],ans:1,exp:'光合成と光の関係を調べるには、「光が当たる・当たらない」だけを変えて他の条件をそろえた対照実験を行います。'},
+      {q:'オオカナダモの実験でヨウ素液で青紫色に染まった小さな粒は何か？',choices:['核','気孔','葉緑体','師管'],ans:2,exp:'ヨウ素液で青紫色に染まった小さな粒は葉緑体です。葉緑体でデンプンがつくられた（光合成が行われた）ことを示しています。'},
+      {q:'蒸散はふつう葉の表側と裏側のどちらでさかんか？',choices:['表側','裏側','両方同じ','茎'],ans:1,exp:'気孔は葉の裏側に多いため、蒸散は葉の裏側でさかんに行われます。'},
+      {q:'蒸散の量が多いのは昼と夜のどちらか？',choices:['夜','昼','同じ','季節による'],ans:1,exp:'光が当たると気孔が開くので、蒸散は昼のほうが夜よりも多くなります。'},
+      {q:'葉でつくられたデンプンはどのように体全体に運ばれるか？',choices:['デンプンのまま師管を通って運ばれる','デンプンのまま道管を通って運ばれる','水に溶けやすい物質に変わり師管を通って運ばれる','水に溶けやすい物質に変わり道管を通って運ばれる'],ans:2,exp:'葉でつくられたデンプンは水に溶けやすい物質に変わり、師管を通って体全体の細胞に運ばれます。'},
+      {q:'葉脈の主なはたらきはどれか？',choices:['光合成','水や養分を通すこと','気体の交換','光を受けること'],ans:1,exp:'葉脈の主なはたらきは水や養分を通すことです（道管・師管が集まった維管束）。'},
+      {q:'光合成に必要なものはどれか（正しい組み合わせ）？',choices:['光・酸素・葉緑体','光・二酸化炭素・水（葉緑体で）','酸素・デンプン・水','二酸化炭素・酸素・光'],ans:1,exp:'光合成は光・二酸化炭素・水を材料として葉緑体で行われ、デンプンと酸素がつくられます。'},
+      {q:'光合成の結果できるものはどれか（正しい組み合わせ）？',choices:['二酸化炭素と水','デンプンと酸素','酸素と二酸化炭素','デンプンと二酸化炭素'],ans:1,exp:'光合成では光・CO₂・水から葉緑体でデンプン（養分）と酸素がつくられます。'},
+    ],
+    // ADVANCED 8問
+    [
+      {q:'光合成の実験で前日に暗室に置く理由はどれか？',choices:['葉をやわらかくするため','葉のデンプンをなくすため','葉の緑色をぬくため','葉を成長させるため'],ans:1,exp:'実験前日に暗室に置くのは、葉に残っているデンプンをなくすためです。デンプンがなくなってから実験すると結果が明確になります。'},
+      {q:'結果：葉緑体あり・光あり→青紫色、葉緑体あり・光なし→色変化なし。この結果からわかることはどれか？',choices:['光合成に水が必要','光合成に光が必要','光合成に温度が必要','光合成に酸素が必要'],ans:1,exp:'葉緑体ありで光ありの部分だけ青紫色になり、光なしでは変わらない。この結果から、光合成には光が必要だとわかります。'},
+      {q:'結果：葉緑体あり・光あり→青紫色、葉緑体なし・光あり→色変化なし。この結果からわかることはどれか？',choices:['光合成に水が必要','光合成に光が必要','光合成は葉緑体で行われる','光合成に酸素が必要'],ans:2,exp:'葉緑体がある部分だけデンプンができたことから、光合成は葉緑体で行われることがわかります。'},
+      {q:'葉の表面からの蒸散量と裏面からの蒸散量を調べる実験でワセリンをぬる理由は？',choices:['葉に水分を与えるため','気孔をふさいで蒸散できなくするため','葉を保護するため','葉を着色するため'],ans:1,exp:'ワセリンは気孔をふさぐはたらきがあります。表側・裏側・両面にぬることで、それぞれの面からの蒸散量を比較できます。'},
+      {q:'A（葉そのまま）の水の減少量8.5cm³、B（表側にワセリン）2.9cm³、C（裏側にワセリン）1.5cm³のとき、葉の表側からの蒸散量は何cm³か？',choices:['1.4cm³','2.9cm³','6.0cm³','8.5cm³'],ans:0,exp:'葉の表側からの蒸散量＝B（表側と茎から蒸散）−C（裏側と茎から蒸散）＝2.9−1.5＝1.4cm³'},
+      {q:'光合成の量が呼吸の量を上回るのはいつか？',choices:['夜間のみ','暗いときのみ','光が強く当たるとき','常に同じ'],ans:2,exp:'光が強く当たるとき、光合成が呼吸より活発になります。夜間は呼吸のみ行われます。'},
+      {q:'植物の葉について間違っているのはどれか？',choices:['葉脈は水や養分を通す管がたくさん集まったものである','植物の葉には葉緑体がない細胞もある','植物の葉は重なり合わないようについている','葉脈のおもなはたらきは養分をつくることである'],ans:3,exp:'葉脈のおもなはたらきは水や養分を通すことであり、養分をつくる（光合成）のは葉緑体のはたらきです。'},
+      {q:'ふ入りアサガオの葉でa（日光あり・緑色部分）とb（日光あり・ふの部分）を比べると光合成のどの条件がわかるか？',choices:['光が必要なこと','葉緑体が必要なこと','水が必要なこと','二酸化炭素が必要なこと'],ans:1,exp:'aとbは光の条件が同じで、葉緑体の有無だけが異なります。aのみデンプンができることから、光合成に葉緑体が必要なことがわかります。'},
+    ],
+  ]},
+
+  // ===== 根・茎のつくりとはたらき =====
+  { name:'根・茎のつくりとはたらき', icon:'🌱', levels:[
+    // BASIC 10問
+    [
+      {q:'根の先端近くに多く生えている、細い毛のようなものを何というか？',choices:['師管','道管','根毛','維管束'],ans:2,exp:'根毛は根の先端近くに多く生えている細い毛のようなものです。根の表面積を大きくして水や肥料分を効率よく吸収できます。'},
+      {q:'根から吸収した水や肥料分が通る管を何というか？',choices:['師管','道管','根毛','維管束'],ans:1,exp:'道管は根から吸収した水や水に溶けた肥料分が通る管です。茎では中心側に集まっています。'},
+      {q:'葉でつくられた養分が通る管を何というか？',choices:['道管','根毛','師管','維管束'],ans:2,exp:'師管は葉でつくられたデンプンなどが水に溶けやすい物質に変わって運ばれる管です。'},
+      {q:'道管と師管が束のように集まった部分を何というか？',choices:['根毛','気孔','葉緑体','維管束'],ans:3,exp:'維管束とは道管と師管が束になって集まった部分です。根・茎・葉（葉脈）とつながっています。'},
+      {q:'図のうち「道管」はどれか？',choices:['A','B','C','D'],ans:0,exp:'Aが道管です。根の断面で放射状に並んでおり、水や肥料分を通します。',svg:'ne_danmen'},
+      {q:'図のうち「師管」はどれか？',choices:['A','B','C','D'],ans:1,exp:'Bが師管です。根の断面で道管の間に交互に並んでおり、葉でつくった養分を通します。',svg:'ne_danmen'},
+      {q:'植物の体から水が水蒸気となって出ていく現象を何というか？',choices:['光合成','呼吸','蒸散','吸水'],ans:2,exp:'蒸散とは植物の体から水が水蒸気となって出ていく現象です。おもに葉の表皮にある気孔から行われます。'},
+      {q:'蒸散はふつう葉の表側と裏側のどちらでさかんに行われるか？',choices:['表側','裏側','同じ','茎'],ans:1,exp:'気孔は葉の裏側に多いため、蒸散は葉の裏側でさかんに行われます。'},
+      {q:'ホウセンカ（双子葉類）の茎の維管束の並び方はどれか？',choices:['全体に散らばっている','輪のように並んでいる','中心に集まっている','表皮のみにある'],ans:1,exp:'ホウセンカなどの双子葉類の茎では、維管束が輪のように並んでいます。'},
+      {q:'トウモロコシ（単子葉類）の茎の維管束の並び方はどれか？',choices:['輪のように並んでいる','全体に散らばっている','中心に集まっている','表皮のみにある'],ans:1,exp:'トウモロコシなどの単子葉類の茎では、維管束が全体に散らばっています。'},
+    ],
+    // STANDARD 12問
+    [
+      {q:'根毛があることで植物にどんな利点があるか？',choices:['光をよく受けられる','表面積が大きくなり水や肥料分を効率よく吸収できる','蒸散がさかんになる','光合成がさかんになる'],ans:1,exp:'根毛があることで根の表面積が大きくなり、土の中の水や肥料分とふれあう面積が増えて効率よく吸収できます。'},
+      {q:'茎の維管束でホウセンカ（双子葉類）の道管はどこにあるか？',choices:['表皮側','中心側','全体に散らばっている','葉脈上'],ans:1,exp:'ホウセンカなどの双子葉類の茎では、維管束の中心側に道管が、表皮側に師管があります。'},
+      {q:'茎に着色した水を吸わせて切ったとき、赤く染まる部分はどこか？',choices:['師管','道管','根毛','表皮'],ans:1,exp:'着色した水は道管を通るので、茎を切ったとき道管の部分が赤く染まります。'},
+      {q:'蒸散の量を調節しているのは何の開閉か？',choices:['道管','師管','気孔','根毛'],ans:2,exp:'蒸散の量は孔辺細胞による気孔の開閉によって調節されます。光が当たると気孔が開き蒸散がさかんになります。'},
+      {q:'根から吸収した水の多くはどこを通って葉まで運ばれるか？',choices:['師管','道管','根毛','気孔'],ans:1,exp:'根から吸収した水の多くは道管を通って葉まで運ばれ、蒸散によって気孔から水蒸気となって大気中に出されます。'},
+      {q:'葉でつくられたデンプンが変わって師管を通るものはどれか？',choices:['デンプン（そのまま）','水に溶けやすい物質','無機塩類','酸素'],ans:1,exp:'デンプンは水に溶けにくいので、水に溶けやすい物質（糖など）に変えられて師管を通って全体に運ばれます。'},
+      {q:'双子葉類と単子葉類の葉脈と根の組み合わせとして正しいのはどれか？',choices:['双子葉類：平行脈・ひげ根、単子葉類：網状脈・主根と側根','双子葉類：網状脈・主根と側根、単子葉類：平行脈・ひげ根','双子葉類：平行脈・主根と側根、単子葉類：網状脈・ひげ根','どちらも同じ'],ans:1,exp:'双子葉類（ホウセンカ・アジサイなど）は網状脈と主根・側根。単子葉類（トウモロコシ・ツユクサなど）は平行脈とひげ根です。'},
+      {q:'蒸散が根からの吸水がさかんになる原因になる理由はどれか？',choices:['蒸散すると葉が重くなるから','蒸散で葉から水が出ると道管内を水が引き上げられ、根からの吸水がさかんになるから','蒸散すると気孔が閉じるから','蒸散すると根毛が増えるから'],ans:1,exp:'蒸散が起こると葉から水が出ていくため道管内の水が引き上げられ、結果として根からの吸水がさかんになります。'},
+      {q:'根と茎と葉の維管束はどのようにつながっているか？',choices:['つながっていない','根と茎はつながるが葉脈とはつながらない','根と茎と葉（葉脈）すべてつながっている','茎と葉脈だけつながっている'],ans:2,exp:'維管束は根・茎・葉（葉脈）とすべてつながっており、植物の体全体に水・養分が行きわたるようになっています。'},
+      {q:'蒸散実験でA（葉の裏側にワセリン）B（茎のみ）C（何もしない）とするとき水の減少量が最も多いのはどれか？',choices:['A','B','C','すべて同じ'],ans:2,exp:'Cは葉の表側・裏側・茎すべてから蒸散するので最も水の減少量が多くなります。'},
+      {q:'茎の師管は表皮側（外側）と中心側（内側）のどちらにあるか？',choices:['中心側','表皮側（外側）'],ans:1,exp:'茎の維管束では表皮側（外側）に師管が、中心側に道管があります。'},
+      {q:'根がついた植物を着色した水に入れた後に茎を輪切りにして観察する実験から何がわかるか？',choices:['師管を水が通ること','道管を水が通ること','根毛から水が吸収されること','葉緑体で光合成が行われること'],ans:1,exp:'着色した水（道管）の部分が赤く染まることから、根から吸収された水は道管を通って運ばれることがわかります。'},
+    ],
+    // ADVANCED 8問
+    [
+      {q:'根毛の表面積が大きいことは植物にとってどんな利点があるか（最も適切）？',choices:['光合成がさかんになる','土の中の水や肥料分とふれる面積が増え、吸収を効率よくできる','蒸散がさかんになる','茎を支えやすくなる'],ans:1,exp:'根毛で表面積が大きくなると、土の粒の間に含まれる水や肥料分とふれ合う面積が増えて効率よく吸収できます。'},
+      {q:'葉の表側からの蒸散量を求める計算：A（何もしない）8.5cm³、B（葉の表側にワセリン）2.9cm³、C（葉の裏側にワセリン）1.5cm³のとき、葉の表側からの蒸散量は？',choices:['1.4cm³','2.9cm³','6.0cm³','8.5cm³'],ans:0,exp:'葉の表側からの蒸散量＝B（葉の裏側と茎）−C（葉の表側と茎）＝2.9−1.5＝1.4cm³'},
+      {q:'全蒸散量（葉の表側・裏側・茎）は何cm³か？A=8.5、B=2.9、C=1.5のとき',choices:['8.4cm³','9.9cm³','11.4cm³','12.9cm³'],ans:1,exp:'全蒸散量＝裏側（8.5−1.5＝7.0）＋表側（1.4）＋茎（1.5）＝9.9cm³'},
+      {q:'植物が体全体に水と養分を行き渡らせるしくみとして正しいのはどれか？',choices:['水も養分も道管を通る','水も養分も師管を通る','水は道管、養分（デンプンが変化したもの）は師管を通る','水は師管、養分は道管を通る'],ans:2,exp:'根から吸収した水・肥料分は道管を通り、葉でつくられたデンプンが変化した養分は師管を通って体全体に運ばれます。'},
+      {q:'ホウセンカ（双子葉類）の茎で道管は中心側・師管は表皮側にある。その覚え方として正しいのはどれか？',choices:['道管は外に出る・師管は内にとどまる','師管（し）は外（外へ出て子を養う）・道管は内（道は内を通る）','両方とも中心側','両方とも表皮側'],ans:1,exp:'師管は表皮側（外側）、道管は中心側。「師管は外（師は外へ出て働く）」と覚えましょう。'},
+      {q:'主根・側根をもつのは双子葉類と単子葉類のどちらか？',choices:['単子葉類のみ','双子葉類のみ','どちらも主根・側根をもつ','どちらもひげ根'],ans:1,exp:'主根と側根をもつのは双子葉類（ホウセンカ・アジサイなど）です。単子葉類（トウモロコシ・ツユクサなど）はひげ根をもちます。'},
+      {q:'根・茎・葉の維管束はつながっているが、道管と師管の位置関係（表皮側・中心側）は根・茎・葉で同じか？',choices:['同じ','茎と葉は同じだが、根は逆','すべて異なる','葉だけ逆'],ans:1,exp:'茎と葉脈では表皮側に師管・中心側に道管がありますが、根では中心部に道管が放射状に配置されています。根の配置は少し異なります。'},
+      {q:'蒸散と吸水の関係で正しいのはどれか？',choices:['蒸散が多いほど吸水も多くなる','蒸散が多いほど吸水は少なくなる','蒸散と吸水は無関係','吸水が蒸散より常に多い'],ans:0,exp:'蒸散が多くなると道管内の水が引き上げられるため、根からの吸水もさかんになります。蒸散量≒吸水量です。'},
+    ],
+  ]},
+
+  // ===== 光合成と呼吸（新単元） =====
+  { name:'光合成と呼吸', icon:'☀️', levels:[
+    // BASIC 15問
+    [
+      {q:'光合成で材料となる気体は何か？',choices:['酸素','二酸化炭素','窒素','水蒸気'],ans:1,exp:'光合成の材料となる気体は二酸化炭素（CO₂）です。葉の気孔から空気中の二酸化炭素をとり入れます。'},
+      {q:'光合成で発生する気体は何か？',choices:['二酸化炭素','窒素','酸素','水蒸気'],ans:2,exp:'光合成で発生する気体は酸素（O₂）です。気孔から空気中に出されます。'},
+      {q:'光合成が行われる部分（葉の細胞内の小器官）は何か？',choices:['ミトコンドリア','核','葉緑体','液胞'],ans:2,exp:'光合成は葉の細胞の中にある葉緑体で行われます。'},
+      {q:'葉でつくられたデンプンはどのような物質に変わって体全体に運ばれるか？',choices:['デンプンのまま','水に溶けやすい物質','気体','無機塩類'],ans:1,exp:'デンプンは水に溶けにくいので、水に溶けやすい物質（糖など）に変えられて師管を通って体全体に運ばれます。'},
+      {q:'光合成のとき、葉にとり入れる気体・放出する気体はどれか？',choices:['とり入れる：酸素、放出：二酸化炭素','とり入れる：二酸化炭素、放出：酸素','とり入れる：窒素、放出：酸素','とり入れる：二酸化炭素、放出：水蒸気'],ans:1,exp:'光合成では二酸化炭素をとり入れ、酸素を放出します。'},
+      {q:'呼吸のとき、植物がとり入れる気体は何か？',choices:['二酸化炭素','窒素','酸素','水蒸気'],ans:2,exp:'植物の呼吸は動物と同様に酸素をとり入れて二酸化炭素を出します。'},
+      {q:'植物の呼吸は光が当たらないときだけ行われるか？',choices:['はい、暗いときだけ','いいえ、光に関係なく常に行われる','昼間のみ行われる','光が強いときだけ行われる'],ans:1,exp:'呼吸は光に関係なく昼も夜も常に行われます。光合成は光が当たるときだけ行われます。'},
+      {q:'石灰水に二酸化炭素を通すとどうなるか？',choices:['青色になる','黄色になる','白くにごる','透明のまま'],ans:2,exp:'石灰水に二酸化炭素を通すと白くにごります。これを利用して二酸化炭素の存在を確認できます。'},
+      {q:'BTB溶液が青色から黄色に変化したとき、二酸化炭素の量はどうなったか？',choices:['減った','変わらない','増えた','なくなった'],ans:2,exp:'BTB溶液は酸性になると黄色になります。二酸化炭素が増えると水溶液が酸性になるため、黄色に変化します。'},
+      {q:'植物が入った袋を一晩暗室に置いたとき、袋の中の空気の変化はどれか？',choices:['酸素が増え二酸化炭素が減る','酸素が減り二酸化炭素が増える','変化しない','窒素が増える'],ans:1,exp:'暗室では光合成が行われず呼吸のみが行われるため、酸素が減り二酸化炭素が増えます。'},
+      {q:'強い光が当たる昼間、植物では呼吸と光合成のどちらがさかんに行われるか？',choices:['呼吸','光合成','両方同じ','どちらも行われない'],ans:1,exp:'強い光が当たるとき、呼吸より光合成がさかんに行われます。全体として二酸化炭素をとり入れ酸素を放出します。'},
+      {q:'植物が暗室に置かれているとき、二酸化炭素は出るか入るか？',choices:['入る','出る','変わらない','両方同時'],ans:1,exp:'暗室では光合成が行われず呼吸のみが行われるため、二酸化炭素が出て酸素が入ります。'},
+      {q:'昼間の植物では全体として何をしているか（気体の出入り）？',choices:['酸素をとり入れ二酸化炭素を出す','二酸化炭素をとり入れ酸素を出す','気体の出入りなし','窒素のみを出す'],ans:1,exp:'昼間は光合成>呼吸なので、全体として二酸化炭素をとり入れ酸素を出しています。'},
+      {q:'夜間の植物では全体として何をしているか（気体の出入り）？',choices:['酸素をとり入れ二酸化炭素を出す','二酸化炭素をとり入れ酸素を出す','気体の出入りなし','窒素のみを出す'],ans:0,exp:'夜間は光合成が行われず呼吸のみなので、酸素をとり入れ二酸化炭素を出します。'},
+      {q:'呼吸を行う細胞内の小器官を何というか？',choices:['葉緑体','核','液胞','ミトコンドリア'],ans:3,exp:'呼吸はミトコンドリアで行われます。ミトコンドリアは植物・動物どちらの細胞にも含まれます。'},
+    ],
+    // STANDARD 17問
+    [
+      {q:'光合成のしくみを表す図で、葉緑体に入るものと出るものの組み合わせはどれか？',choices:['入る：酸素・水、出る：デンプン・二酸化炭素','入る：二酸化炭素・水、出る：デンプン・酸素','入る：デンプン・酸素、出る：二酸化炭素・水','入る：二酸化炭素・酸素、出る：水・デンプン'],ans:1,exp:'葉緑体に入るもの：二酸化炭素（気孔から）・水（根から）・光エネルギー。出るもの：デンプン（養分）・酸素。',svg:'kogosei_shikumi'},
+      {q:'呼吸のしくみを表す図で、ミトコンドリアに入るものと出るものの組み合わせはどれか？',choices:['入る：酸素・養分、出る：二酸化炭素・水','入る：二酸化炭素・水、出る：養分・酸素','入る：酸素・デンプン、出る：水蒸気・酸素','入る：二酸化炭素・養分、出る：酸素・水'],ans:0,exp:'ミトコンドリアに入るもの：酸素・養分（デンプンが変化したもの）。出るもの：二酸化炭素・水・エネルギー。',svg:'kokyuu_shikumi'},
+      {q:'試験管Aにタンポポの葉を入れて日光を当てた。石灰水を加えて振ると石灰水はどうなるか？',choices:['白くにごった','変化しなかった','青くなった','黄色くなった'],ans:1,exp:'タンポポの葉は光合成を行い、試験管内の二酸化炭素を吸収しました。そのため石灰水は変化しませんでした（B：葉なし→白くにごる）。'},
+      {q:'BTB溶液を緑色にして、ビーカーに入れたオオカナダモに日光を当てた。BTB溶液の色の変化はどれか？',choices:['緑色→黄色','緑色→青色','変化なし','緑色→赤色'],ans:1,exp:'オオカナダモが光合成を行い二酸化炭素を吸収したため、BTB溶液の酸性が弱まって青色（アルカリ性）に変化します。'},
+      {q:'BTB溶液を緑色にして、光を当てなかったオオカナダモの試験管のBTB溶液の色はどれか？',choices:['青色','緑色（変化なし）','黄色','赤色'],ans:2,exp:'光を当てないと光合成は行われず呼吸のみが行われます。二酸化炭素が増えて酸性になり、BTB溶液は黄色に変化します。'},
+      {q:'光合成が行われるとき、気孔から出入りする気体の正しい組み合わせはどれか？',choices:['入る：酸素、出る：二酸化炭素','入る：二酸化炭素、出る：酸素','入る：酸素と二酸化炭素、出る：水蒸気','入る：窒素、出る：酸素'],ans:1,exp:'光合成のとき、気孔から二酸化炭素をとり入れ、酸素を放出します。水蒸気（蒸散）も出ます。'},
+      {q:'植物の呼吸の実験で、袋の中に植物の新鮮な葉と空気を入れて一晩暗室に置き、その空気を石灰水に通した。石灰水はどうなったか？',choices:['変化しなかった','白くにごった','青くなった','黒くなった'],ans:1,exp:'植物は呼吸によって二酸化炭素を出すので、袋の中に二酸化炭素が増えました。その空気を石灰水に通すと白くにごります。'},
+      {q:'対照実験とは何か？',choices:['結果が同じになるように工夫した実験','調べたいこと以外の条件を同じにして行う実験','何度も繰り返す実験','全ての条件を変える実験'],ans:1,exp:'対照実験とは、調べたい条件だけを変えて、他の条件をすべてそろえて行う実験です。'},
+      {q:'光合成と呼吸の気体の出入りで逆なのはどれか？',choices:['光合成と呼吸はまったく同じ','光合成と呼吸は気体の出入りが逆である','光合成のみ気体の出入りがある','呼吸のみ気体の出入りがある'],ans:1,exp:'光合成は二酸化炭素をとり入れ酸素を出す。呼吸は酸素をとり入れ二酸化炭素を出す。気体の出入りが逆です。'},
+      {q:'植物が強い光を受けると呼吸と光合成の関係はどうなるか？',choices:['呼吸がさかんになる','光合成がさかんになり呼吸を上回る','両方おなじくらい行われる','どちらも行われなくなる'],ans:1,exp:'強い光が当たると光合成がさかんになり、呼吸を上回ります。そのため全体として二酸化炭素をとり入れ酸素を放出します。'},
+      {q:'昼間の植物では光合成と呼吸が行われる。昼（強い光）に排出されるのはどちらか？',choices:['酸素のみ（光合成>呼吸）','二酸化炭素のみ（呼吸>光合成）','どちらも排出されない','窒素のみ'],ans:0,exp:'昼間（強い光）は光合成が呼吸より活発で、全体として酸素が排出されます（二酸化炭素は吸収）。'},
+      {q:'暗所の植物では光合成と呼吸のどちらが行われるか？',choices:['光合成のみ','呼吸のみ','どちらも行われない','どちらも同じくらい行われる'],ans:1,exp:'暗所では光合成は行われず、呼吸のみが行われます。'},
+      {q:'光合成でつくられたデンプンのゆくえとして誤っているのはどれか？',choices:['呼吸や成長などに使われる','再びデンプンに変えられて果実や種子にたくわえられる','水に溶けやすい物質に変えられて全体に運ばれる','気孔から気体として放出される'],ans:3,exp:'デンプンは気体として放出されません。呼吸・成長に使われたり、全体に運ばれたり、果実・種子にたくわえられたりします。'},
+      {q:'オオカナダモに日光を当て、ペットボトルに水と一緒に入れると気体が発生した。発生した気体はどれか？',choices:['二酸化炭素','水蒸気','酸素','窒素'],ans:2,exp:'オオカナダモが光合成を行い、酸素を発生しました。集めた気体に火をつけた線香を入れると線香が激しく燃えることで酸素と確認できます。'},
+      {q:'緑色のBTB溶液に息を十分にふきこむとBTB溶液の色はどうなるか？',choices:['青色','赤色','黄色','変化なし'],ans:2,exp:'息に含まれる二酸化炭素が水に溶けて酸性になるため、BTB溶液は黄色に変化します。'},
+      {q:'黄色になったBTB溶液を加熱して気体を追い出すとどうなるか？',choices:['青色になる','緑色になる','さらに黄色くなる','赤色になる'],ans:0,exp:'加熱すると溶けていた二酸化炭素が追い出されて酸性が弱まり、BTB溶液は青色（アルカリ性）に戻ります。'},
+      {q:'袋A（植物の葉と空気）と袋B（空気だけ）を一晩暗室に置いた。対照実験でBが必要な理由はどれか？',choices:['植物があると実験が正確にできないから','葉がなくても二酸化炭素が変化しないか確認するため','袋を2つ用意すると結果が2倍になるから','袋Aの結果が間違っていた場合に使うため'],ans:1,exp:'対照実験として袋B（葉なし）を用意することで、袋の中の空気の変化が葉によるものだと確認できます。'},
+    ],
+    // ADVANCED 13問
+    [
+      {q:'光合成の実験でオオカナダモに日光を当て発生した気体が酸素であることを確認する方法はどれか？',choices:['石灰水を加える','火をつけた線香を入れる','BTB溶液を加える','リトマス紙で調べる'],ans:1,exp:'酸素は物が燃えるのを助けるはたらきがあります。火をつけた線香を入れると激しく燃えることで酸素と確認できます。'},
+      {q:'試験管A（タンポポの葉・日光あり）とB（葉なし・日光あり）で石灰水を使った実験。Aの石灰水が変化しなかった理由は？',choices:['石灰水の量が少なかったから','タンポポの葉が光合成を行い、二酸化炭素を吸収したから','タンポポの葉から二酸化炭素が出たから','石灰水が古かったから'],ans:1,exp:'タンポポの葉が光合成を行い試験管内の二酸化炭素を吸収したため、石灰水に反応する二酸化炭素がなくなりました。'},
+      {q:'袋A（葉あり・日光あり）・袋C（葉あり・暗所）のBTB溶液の変化として正しいのはどれか？',choices:['A→青色（光合成でCO₂吸収）、C→黄色（呼吸でCO₂放出）','A→黄色（呼吸でCO₂放出）、C→青色（光合成でCO₂吸収）','A・C両方黄色','A・C両方青色'],ans:0,exp:'袋A（日光あり）は光合成がさかんで二酸化炭素が減り青色に。袋C（暗所）は呼吸のみで二酸化炭素が増え黄色に変化します。'},
+      {q:'袋A（葉あり・日光あり）での酸素の変化として正しいのはどれか？',choices:['酸素が減った','変化なし','酸素が増えた','酸素がなくなった'],ans:2,exp:'日光が当たると光合成>呼吸となり、酸素が増えます。実際の実験でも気体検知管で酸素が測定開始時より増えたことが確認されます。'},
+      {q:'袋C（葉あり・暗所）での気体変化として正しいのはどれか？',choices:['酸素↑・二酸化炭素↓','酸素↓・二酸化炭素↑','変化なし','酸素のみ変化'],ans:1,exp:'暗所では光合成が行われず呼吸のみ。酸素が使われ（↓）、二酸化炭素が出される（↑）。'},
+      {q:'袋A（葉あり・光あり）で二酸化炭素が2.0%に減ったとき（開始時2.7%）光合成が呼吸を上回った理由は？',choices:['光合成は行われず呼吸だけ行われたから','光合成によって二酸化炭素が消費されたから','石灰水が二酸化炭素を吸収したから','袋に穴があいていたから'],ans:1,exp:'袋Aでは光合成（CO₂を吸収）が呼吸（CO₂を放出）を上回ったため、全体としてCO₂が減りました。'},
+      {q:'光合成と呼吸の大きな違いとして正しいのはどれか？',choices:['光合成は昼だけ、呼吸は夜だけ行われる','光合成は光があるときだけ、呼吸は常に行われる','どちらも光があるときのみ行われる','光合成は常に、呼吸は夜のみ行われる'],ans:1,exp:'光合成は光が当たるときだけ葉緑体で行われます。呼吸は光に関係なく昼も夜も常にミトコンドリアで行われます。'},
+      {q:'植物が1日中行うはたらきはどちらか？',choices:['光合成のみ','呼吸のみ','どちらも1日中行う','どちらも昼間のみ'],ans:1,exp:'植物は光合成（昼間・光があるとき）と呼吸（1日中）を行います。1日中行うのは呼吸です。'},
+      {q:'光合成に二酸化炭素が必要かどうかを調べる実験として正しい方法はどれか？',choices:['袋の中の酸素をなくす','水酸化ナトリウムで袋の中の二酸化炭素を吸収させ、葉に光を当てる','葉を暗室に置く','葉を熱湯につける'],ans:1,exp:'水酸化ナトリウムは二酸化炭素を吸収します。袋の中の二酸化炭素をなくして光を当てると光合成が行われないことから、二酸化炭素が必要とわかります。'},
+      {q:'光合成の実験でBTB溶液を青色（または緑色）に調整する理由はどれか？',choices:['青色・緑色だと実験が正確になるから','色の変化（黄色・青色）を見やすくするため','BTB溶液は必ず青色にしなければならないから','BTB溶液の青色が光合成に必要だから'],ans:1,exp:'BTBは黄（酸性）↔緑（中性）↔青（アルカリ性）と変化します。あらかじめ緑か青に調整することで変化を見やすくします。'},
+      {q:'気体検知管で酸素と二酸化炭素の体積の割合を調べるとき、検知管の使い方で誤っているのはどれか？',choices:['両端をチップホルダーで折り取る','印を合わせてハンドルを引いてゆっくり気体を吸い込む','カバーゴムを先端につける','使用後すぐに手でさわる'],ans:3,exp:'気体検知管は使用直後に非常に熱くなっているので、すぐに手でさわってはいけません。'},
+      {q:'植物の呼吸でミトコンドリアが行うはたらきを正しく表しているのはどれか？',choices:['光エネルギーで養分をつくる','養分を分解して生命活動に必要なエネルギーをとり出す','水を吸収する','二酸化炭素を固定する'],ans:1,exp:'ミトコンドリアでは酸素を使って養分（デンプンが変化したもの）を分解し、生命活動に必要なエネルギーをとり出します。これが呼吸です。'},
+      {q:'光合成量＞呼吸量となるのはどのような状態か？',choices:['暗い場所','弱い光が当たるとき','強い光が当たるとき','温度が低いとき'],ans:2,exp:'強い光が当たるとき、光合成量が呼吸量を大きく上回ります。全体として植物は有機物を合成し、成長します。'},
+    ],
+  ]},
+];
+
+// ===== 単元別統計 =====
+let unitStats = [{correct:0,total:0},{correct:0,total:0},{correct:0,total:0},{correct:0,total:0}];
+let wrongFreq = {};
+let wrongBank = [];
+
+// ===== STATE =====
+let state = {
+  points:0, level:1, totalCorrect:0, maxCombo:0,
+  currentUnit:0, currentLevel:0,
+  questions:[], qIndex:0,
+  sessionCorrect:0, sessionWrong:0, sessionPoints:0,
+  sessionCombo:0, sessionMaxCombo:0,
+  sessionWrongQuestions:[],
+  answered:false, reviewMode:false, weakMode:false,
+  timeAttack:false,
+  timerInterval:null, timerLeft:30,
+};
+const TIMER_SEC = 30;
+
+function loadAll() {
+  try { const s=localStorage.getItem('seibutsu2_state'); if(s){const p=JSON.parse(s);state.points=p.points||0;state.level=p.level||1;state.totalCorrect=p.totalCorrect||0;state.maxCombo=p.maxCombo||0;} } catch(e){}
+  try { const u=localStorage.getItem('seibutsu2_unitstats'); if(u) unitStats=JSON.parse(u); } catch(e){}
+  try { const f=localStorage.getItem('seibutsu2_wrongfreq'); if(f) wrongFreq=JSON.parse(f); } catch(e){}
+  try { const w=localStorage.getItem('seibutsu2_wrong'); if(w) wrongBank=JSON.parse(w); } catch(e){}
+}
+function saveAll() {
+  try {
+    localStorage.setItem('seibutsu2_state',JSON.stringify({points:state.points,level:state.level,totalCorrect:state.totalCorrect,maxCombo:state.maxCombo}));
+    localStorage.setItem('seibutsu2_unitstats',JSON.stringify(unitStats));
+    localStorage.setItem('seibutsu2_wrongfreq',JSON.stringify(wrongFreq));
+    localStorage.setItem('seibutsu2_wrong',JSON.stringify(wrongBank));
+  } catch(e){}
+}
+
+function addToWrongBank(q) {
+  if (!wrongBank.find(w=>w.q===q.q)) wrongBank.push({q:q.q,choices:q.choices,ans:q.ans,exp:q.exp,svg:q.svg||null});
+  wrongFreq[q.q]=(wrongFreq[q.q]||0)+1;
+}
+function removeFromWrongBank(q) { wrongBank=wrongBank.filter(w=>w.q!==q.q); }
+
+function getWeakQuestions() {
+  const sorted=Object.entries(wrongFreq).sort((a,b)=>b[1]-a[1]);
+  const topKeys=sorted.slice(0,10).map(e=>e[0]);
+  const allQ=[];
+  UNITS.forEach(u=>u.levels.forEach(lvl=>lvl.forEach(q=>allQ.push(q))));
+  return allQ.filter(q=>topKeys.includes(q.q));
+}
+
+function updateHomeStats() {
+  document.getElementById('total-points').textContent=state.points;
+  document.getElementById('player-level').textContent=state.level;
+  document.getElementById('total-correct').textContent=state.totalCorrect;
+  document.getElementById('max-combo-home').textContent=state.maxCombo;
+}
+function updateCharts() {
+  const colors=['#69c46d','#4fc3f7','#ce93d8','#ffd54f'];
+  for(let i=0;i<4;i++){
+    const s=unitStats[i];
+    const pct=s.total>0?Math.round(s.correct/s.total*100):null;
+    const bar=document.getElementById('bar-'+i);
+    const pctEl=document.getElementById('pct-'+i);
+    if(pct!==null){
+      bar.style.width=pct+'%';
+      pctEl.textContent=pct+'%';
+      bar.style.background=pct>=80?'#69c46d':pct>=60?'#ffd54f':'#e05c5c';
+    } else {
+      bar.style.width='0%';
+      pctEl.textContent='-%';
+      bar.style.background=colors[i];
+    }
+  }
+}
+function updateReviewUI() {
+  const cnt=wrongBank.length;
+  const btn=document.getElementById('review-home-btn');
+  document.getElementById('review-count').textContent=cnt;
+  btn.classList.toggle('visible',cnt>0);
+  btn.style.display=cnt>0?'':'none';
+  const rBtn=document.getElementById('review-result-btn');
+  if(rBtn) rBtn.style.display=state.sessionWrongQuestions.length>0?'block':'none';
+}
+function updateWeakUI() {
+  const keys=Object.keys(wrongFreq);
+  const weakCard=document.getElementById('weak-card-btn');
+  if(keys.length>=3){
+    weakCard.classList.add('visible');
+    weakCard.style.display='block';
+    document.getElementById('weak-count-text').textContent=Math.min(10,keys.length)+'問 選抜';
+  } else {
+    weakCard.classList.remove('visible');
+    weakCard.style.display='none';
+  }
+}
+function updateLevelCounts() {
+  const u=UNITS[state.currentUnit];
+  ['lv1-count','lv2-count','lv3-count'].forEach((id,i)=>{
+    document.getElementById(id).textContent=(u.levels[i]||[]).length+'問';
+  });
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ===== TIMER =====
+function startTimer() {
+  clearTimer();
+  state.timerLeft=TIMER_SEC;
+  const wrap=document.getElementById('timer-bar-wrap');
+  const fill=document.getElementById('timer-bar-fill');
+  wrap.style.display='block';
+  fill.style.width='100%';
+  fill.style.background='#69c46d';
+  state.timerInterval=setInterval(()=>{
+    state.timerLeft-=0.1;
+    const pct=Math.max(0,state.timerLeft/TIMER_SEC*100);
+    fill.style.width=pct+'%';
+    fill.style.background=pct>50?'#69c46d':pct>25?'#ffd54f':'#e05c5c';
+    if(state.timerLeft<=0){clearTimer();handleTimeout();}
+  },100);
+}
+function clearTimer() {
+  if(state.timerInterval){clearInterval(state.timerInterval);state.timerInterval=null;}
+}
+function handleTimeout() {
+  if(state.answered) return;
+  state.answered=true;
+  const q=state.questions[state.qIndex];
+  const choicesEl=document.getElementById('choices');
+  const correctIdx=parseInt(choicesEl.dataset.correctIdx);
+  const btns=choicesEl.querySelectorAll('.choice-btn');
+  btns.forEach(b=>b.disabled=true);
+  btns[correctIdx].classList.add('correct');
+  state.sessionWrong++;
+  state.sessionCombo=0;
+  addToWrongBank(q);
+  state.sessionWrongQuestions.push(q);
+  document.getElementById('timeout-msg').classList.add('show');
+  document.getElementById('exp-header').textContent='⏰ 時間切れ！';
+  document.getElementById('exp-text').textContent=q.exp;
+  document.getElementById('explanation').classList.add('show');
+  document.getElementById('next-btn').classList.add('show');
+  document.getElementById('next-btn').textContent=state.qIndex+1>=state.questions.length?'結果を見る →':'次の問題へ →';
+}
+
+// ===== QUIZ =====
+function startQuiz() {
+  clearTimer();
+  const qs=UNITS[state.currentUnit].levels[state.currentLevel];
+  state.questions=shuffle([...qs]);
+  state.qIndex=0;state.sessionCorrect=0;state.sessionWrong=0;state.sessionPoints=0;
+  state.sessionCombo=0;state.sessionMaxCombo=0;state.sessionWrongQuestions=[];
+  state.reviewMode=false;state.weakMode=false;
+  showScreen('quiz');renderQuestion();
+}
+function startReview() {
+  if(wrongBank.length===0) return;
+  clearTimer();
+  state.questions=shuffle([...wrongBank]);
+  state.qIndex=0;state.sessionCorrect=0;state.sessionWrong=0;state.sessionPoints=0;
+  state.sessionCombo=0;state.sessionMaxCombo=0;state.sessionWrongQuestions=[];
+  state.reviewMode=true;state.weakMode=false;
+  showScreen('quiz');renderQuestion();
+}
+function startWeak() {
+  const wq=getWeakQuestions();
+  if(wq.length===0) return;
+  clearTimer();
+  state.questions=shuffle(wq);
+  state.qIndex=0;state.sessionCorrect=0;state.sessionWrong=0;state.sessionPoints=0;
+  state.sessionCombo=0;state.sessionMaxCombo=0;state.sessionWrongQuestions=[];
+  state.reviewMode=false;state.weakMode=true;
+  showScreen('quiz');renderQuestion();
+}
+
+function updateQLabel() {
+  const el=document.getElementById('q-level');
+  const lvNames=['BASIC','STANDARD','ADVANCED'];
+  if(state.reviewMode){el.textContent='📝 まちがい復習';el.style.color='#f4a736';}
+  else if(state.weakMode){el.textContent='🎯 苦手ピックアップ';el.style.color='#ffd54f';}
+  else{el.textContent=lvNames[state.currentLevel];el.style.color='';}
+}
+
+function renderQuestion() {
+  const q=state.questions[state.qIndex];
+  const total=state.questions.length;
+  document.getElementById('progress-text').textContent=`${state.qIndex+1} / ${total}`;
+  document.getElementById('progress-fill').style.width=`${(state.qIndex/total)*100}%`;
+  document.getElementById('quiz-score').textContent=`${state.sessionPoints}pt`;
+  updateQLabel();
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('timeout-msg').classList.remove('show');
+  document.getElementById('explanation').classList.remove('show');
+  document.getElementById('next-btn').classList.remove('show');
+  document.getElementById('combo-banner').classList.remove('show');
+
+  const svgWrap=document.getElementById('svg-container');
+  const svgContent=document.getElementById('svg-content');
+  if(q.svg&&SVGS[q.svg]){svgContent.innerHTML=SVGS[q.svg](null);svgWrap.classList.add('show');}
+  else{svgContent.innerHTML='';svgWrap.classList.remove('show');}
+
+  const choicesEl=document.getElementById('choices');
+  choicesEl.innerHTML='';
+  const isAlpha=q.choices.every(c=>/^[A-D]$/.test(c.trim()));
+  const ordered=isAlpha?q.choices.map((v,i)=>({val:v,orig:i})):shuffleWithIndex(q.choices);
+  choicesEl.dataset.correctIdx=ordered.findIndex(c=>c.orig===q.ans);
+  ordered.forEach((c,i)=>{
+    const btn=document.createElement('button');
+    btn.className='choice-btn';btn.textContent=q.choices[c.orig];btn.dataset.idx=i;
+    choicesEl.appendChild(btn);
+  });
+  state.answered=false;
+  if(state.timeAttack) startTimer();
+  else{clearTimer();document.getElementById('timer-bar-wrap').style.display='none';}
+}
+
+function handleChoice(idx) {
+  if(state.answered) return;
+  state.answered=true;
+  clearTimer();
+  const q=state.questions[state.qIndex];
+  const choicesEl=document.getElementById('choices');
+  const correctIdx=parseInt(choicesEl.dataset.correctIdx);
+  const btns=choicesEl.querySelectorAll('.choice-btn');
+  btns.forEach(b=>b.disabled=true);
+  const isCorrect=parseInt(idx)===correctIdx;
+  btns[idx].classList.add(isCorrect?'correct':'wrong');
+  if(!isCorrect) btns[correctIdx].classList.add('correct');
+
+  let basePoint=state.reviewMode||state.weakMode?10:(state.currentLevel===0?5:state.currentLevel===1?10:15);
+
+  if(isCorrect){
+    state.sessionCorrect++;
+    state.sessionCombo++;
+    if(state.sessionCombo>state.sessionMaxCombo) state.sessionMaxCombo=state.sessionCombo;
+    let comboBonus=0;
+    if(state.sessionCombo>=5) comboBonus=10;
+    else if(state.sessionCombo>=3) comboBonus=5;
+    let timeBonus=0;
+    if(state.timeAttack) timeBonus=Math.floor(state.timerLeft/TIMER_SEC*10);
+    const gain=basePoint+comboBonus+timeBonus;
+    state.sessionPoints+=gain;
+    let gainMsg=`✅ 正解！ +${gain}pt`;
+    if(comboBonus>0) gainMsg+=` (コンボ+${comboBonus})`;
+    if(timeBonus>0) gainMsg+=` (速度+${timeBonus})`;
+    document.getElementById('exp-header').textContent=gainMsg;
+    if(state.sessionCombo>=3){
+      const cb=document.getElementById('combo-banner');
+      cb.textContent=`🔥 ${state.sessionCombo}連続正解！ コンボボーナス！`;
+      cb.classList.add('show');
+    }
+    if(q.svg&&SVGS[q.svg]) document.getElementById('svg-content').innerHTML=SVGS[q.svg](q.choices[q.ans]);
+    if(state.reviewMode) removeFromWrongBank(q);
+  } else {
+    state.sessionWrong++;
+    state.sessionCombo=0;
+    document.getElementById('exp-header').textContent='❌ 不正解';
+    addToWrongBank(q);
+    state.sessionWrongQuestions.push(q);
+  }
+
+  if(!state.reviewMode&&!state.weakMode){
+    unitStats[state.currentUnit].total++;
+    if(isCorrect) unitStats[state.currentUnit].correct++;
+  }
+
+  document.getElementById('quiz-score').textContent=`${state.sessionPoints}pt`;
+  document.getElementById('exp-text').textContent=q.exp;
+  document.getElementById('explanation').classList.add('show');
+  document.getElementById('next-btn').classList.add('show');
+  document.getElementById('next-btn').textContent=state.qIndex+1>=state.questions.length?'結果を見る →':'次の問題へ →';
+}
+
+function nextQuestion() {
+  state.qIndex++;
+  if(state.qIndex>=state.questions.length) showResult();
+  else renderQuestion();
+}
+
+function showResult() {
+  clearTimer();
+  const total=state.questions.length;
+  const rate=Math.round(state.sessionCorrect/total*100);
+  const oldLevel=state.level;
+  state.points+=state.sessionPoints;
+  state.totalCorrect+=state.sessionCorrect;
+  if(state.sessionMaxCombo>state.maxCombo) state.maxCombo=state.sessionMaxCombo;
+  state.level=Math.floor(state.points/50)+1;
+  const leveledUp=state.level>oldLevel;
+  saveAll();
+
+  let emoji='😢',title='もう少し！',sub=`正答率${rate}%。もう一度チャレンジ！`;
+  if(rate===100){emoji='🎉';title='パーフェクト！';sub='全問正解！すごい！';}
+  else if(rate>=80){emoji='😊';title='よくできた！';sub=`正答率${rate}%！もう少しで完璧！`;}
+  else if(rate>=60){emoji='🙂';title='まあまあ！';sub=`正答率${rate}%。復習しよう！`;}
+
+  document.getElementById('result-emoji').textContent=emoji;
+  document.getElementById('result-title').textContent=title;
+  document.getElementById('result-sub').textContent=sub;
+  document.getElementById('result-score').textContent=`+${state.sessionPoints}pt`;
+  document.getElementById('r-correct').textContent=state.sessionCorrect;
+  document.getElementById('r-wrong').textContent=state.sessionWrong;
+  document.getElementById('r-rate').textContent=rate+'%';
+  document.getElementById('r-combo').textContent=state.sessionMaxCombo;
+
+  const banner=document.getElementById('level-up-banner');
+  if(leveledUp){document.getElementById('new-level').textContent=state.level;banner.classList.add('show');}
+  else banner.classList.remove('show');
+
+  updateHomeStats();updateCharts();updateReviewUI();updateWeakUI();
+  showScreen('result');
+}
+
+function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+function shuffleWithIndex(arr){const idx=arr.map((v,i)=>({val:v,orig:i}));for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]];}return idx;}
+
+// ===== EVENTS =====
+document.addEventListener('click', function(e){
+  const unitBtn=e.target.closest('.unit-btn');
+  if(unitBtn){
+    state.currentUnit=parseInt(unitBtn.dataset.unit);
+    document.getElementById('level-unit-title').textContent=UNITS[state.currentUnit].name;
+    updateLevelCounts();showScreen('level-select');return;
+  }
+  const levelBtn=e.target.closest('.level-btn');
+  if(levelBtn){state.currentLevel=parseInt(levelBtn.dataset.level);startQuiz();return;}
+  const choiceBtn=e.target.closest('.choice-btn');
+  if(choiceBtn&&!state.answered){handleChoice(parseInt(choiceBtn.dataset.idx));return;}
+  if(e.target.id==='next-btn'){nextQuestion();return;}
+  if(e.target.id==='back-to-home'){showScreen('home');return;}
+  if(e.target.id==='quiz-back'){clearTimer();showScreen('home');updateReviewUI();updateWeakUI();return;}
+  if(e.target.id==='retry-btn'){startQuiz();return;}
+  if(e.target.id==='home-btn-result'){showScreen('home');updateReviewUI();updateWeakUI();return;}
+  if(e.target.id==='review-home-btn'||e.target.closest('#review-home-btn')){startReview();return;}
+  if(e.target.id==='review-result-btn'){startReview();return;}
+  if(e.target.id==='weak-card-btn'||e.target.closest('#weak-card-btn')){startWeak();return;}
+  if(e.target.id==='time-toggle'||e.target.closest('#time-toggle')){
+    const tog=document.getElementById('time-toggle');
+    state.timeAttack=!state.timeAttack;
+    tog.classList.toggle('on',state.timeAttack);return;
+  }
+});
+
+// ===== INIT =====
+loadAll();updateHomeStats();updateCharts();updateReviewUI();updateWeakUI();
+
+})();
+</script>
+</body>
+</html>
